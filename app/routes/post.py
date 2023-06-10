@@ -1,3 +1,4 @@
+# APIRouter нужен, чтобы получить доступ к объекту app из файла main.py
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -16,6 +17,10 @@ def get_posts(db: Session=Depends(get_db)):
 
 @router.get("/{id}", response_model=schemas.Post)
 def get_post(id: int, db: Session=Depends(get_db)):
+
+    # Вместо .all() тут будет использоваться .first(), так как
+    # мы точно знаем, что запись с требуемым id будет только одна,
+    # а значит, нет никакого смысла искать дальше.
     post = db.query(models.Post).filter(models.Post.id == id).first()
 
     if post is None:
@@ -27,9 +32,18 @@ def get_post(id: int, db: Session=Depends(get_db)):
 
 @router.post("/", response_model=schemas.Post, status_code=status.HTTP_201_CREATED)
 def create_post(post: schemas.PostCreate, db: Session=Depends(get_db)):
+
+    # Создаем новый объект
     new_post = models.Post(**post.dict())
+
+    # Добавляем его в базу данных
     db.add(new_post)
+
+    # Записываем изменения
     db.commit()
+
+    # Получаем созданный объект (аналог RETURNING).
+    # Он запишется в переменную new_post.
     db.refresh(new_post)
 
     return new_post

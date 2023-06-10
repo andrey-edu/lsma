@@ -10,6 +10,8 @@ class Post(PostBase):
     id: int
     created_at: datetime
 
+    # Чтобы pydantic мог сериализовать orm-модель, нужно
+    # добавить такой конфиг
     class Config:
         orm_mode = True
 
